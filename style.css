@@ -64,8 +64,14 @@ body { background:var(--ios-bg); color:var(--ios-label); }
 
 a{ color:var(--ios-blue); text-decoration:none; }
 a:hover{ text-decoration:underline; }
-img{ max-width:100%; height:auto; display:block; margin:.25rem 0;
-  transition:transform .18s var(--ease), opacity .18s var(--ease); }
+img{
+  max-width:100%;
+  width:100%;
+  height:auto;
+  display:block;
+  margin:.25rem auto;
+  transition:transform .18s var(--ease), opacity .18s var(--ease);
+}
 ul,ol{ margin:.25rem 0 .25rem 1.25rem; padding-left:1rem; }
 li{ margin:.15rem 0; }
 i{ font-family:"Times New Roman",serif; padding-right:3px; }
