@@ -1,0 +1,142 @@
+<!-- =========================
+     Apple 风格 · Back（去水印）
+     ========================= -->
+{{FrontSide}}
+
+{{#答案}}
+  <div class="section slide">
+    <div class="bar yleft">
+      <span class="icon yimg" aria-hidden="true"></span>
+      <span class="bar-title">答案</span>
+    </div>
+    <div class="h2 answer" style="margin-top:0.4rem">{{答案}}</div>
+  </div>
+{{/答案}}
+
+{{#笔记}}
+  <div class="section slide">
+    <div class="bar yleft">
+      <span class="icon yimg" aria-hidden="true"></span>
+      <span class="bar-title">笔记</span>
+    </div>
+    <div class="h2 note" style="margin-top:0.4rem">{{笔记}}</div>
+  </div>
+{{/笔记}}
+
+{{#相关知识}}
+  <div class="section slide">
+    <div class="bar zleft">
+      <span class="icon zimg" aria-hidden="true"></span>
+      <span class="bar-title">相关知识</span>
+    </div>
+    <div class="h2 related" style="margin-top:0.4rem">{{hint:相关知识}}</div>
+  </div>
+{{/相关知识}}
+
+<script>
+(function () {
+  // 如果正面已经定义了，就直接用正面的初始化
+  if (window.__appleEnhance && typeof window.__appleEnhance.init === "function") {
+    window.__appleEnhance.init();
+    return;
+  }
+
+  // —— 下面是兜底（极少数情况下正面脚本没跑到）
+  window.__appleEnhance = window.__appleEnhance || {};
+  var NS = window.__appleEnhance;
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function writeTimeOnce() {
+    var t = document.getElementById('time');
+    if (!t) return;
+    if (!t.textContent || !t.textContent.trim()) {
+      var d = new Date();
+      t.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+      t.title = d.toLocaleString();
+    }
+  }
+
+  function clearAllZoom() {
+    var zoomed = document.querySelectorAll('img.zoomed');
+    for (var j = 0; j < zoomed.length; j++) {
+      zoomed[j].classList.remove('zoomed');
+      zoomed[j].style.cursor = 'zoom-in';
+    }
+    document.body.classList.remove('zooming');
+  }
+
+  function enableImageZoom(scope){
+    var root = scope || document;
+    var imgs = root.querySelectorAll('img');
+    for (var i = 0; i < imgs.length; i++) {
+      (function (img) {
+        if (img.dataset.zoomBound) return;
+        img.dataset.zoomBound = "1";
+        img.style.cursor = 'zoom-in';
+
+        img.addEventListener('click', function(ev){
+          if (img.closest('.icon')) return;
+          if (img.dataset.nozoom === "1" || img.classList.contains('no-zoom')) return;
+
+          if (img.classList.contains('zoomed')) {
+            img.classList.remove('zoomed');
+            img.style.cursor = 'zoom-in';
+            if (!document.querySelector('img.zoomed')) {
+              document.body.classList.remove('zooming');
+            }
+            return;
+          }
+
+          clearAllZoom();
+          img.classList.add('zoomed');
+          img.style.cursor = 'zoom-out';
+          document.body.classList.add('zooming');
+          ev.stopPropagation();
+        });
+      })(imgs[i]);
+    }
+
+    if (!NS.escBound) {
+      document.addEventListener('keydown', function(e){
+        e = e || window.event;
+        var key = e.key || e.keyCode;
+        if (key === 'Escape' || key === 27) {
+          clearAllZoom();
+        }
+      }, false);
+      NS.escBound = true;
+    }
+
+    if (!NS.clickBlankBound) {
+      document.addEventListener('click', function(e){
+        if (!document.body.classList.contains('zooming')) return;
+        if (e.target && e.target.tagName === 'IMG') return;
+        clearAllZoom();
+      }, false);
+      NS.clickBlankBound = true;
+    }
+  }
+
+  function enhanceTablesAndCode(){
+    var tbs = document.querySelectorAll('table');
+    for (var i = 0; i < tbs.length; i++) {
+      var tb = tbs[i];
+      tb.classList.add('table');
+      var w = tb.parentElement;
+      if (w && w !== document.body && w !== document.documentElement) {
+        w.classList.add('scroll-x');
+      }
+    }
+    var codes = document.querySelectorAll('pre, code');
+    for (var j = 0; j < codes.length; j++) {
+      codes[j].classList.add('code');
+    }
+  }
+
+  // 兜底跑一遍
+  writeTimeOnce();
+  enableImageZoom();
+  enhanceTablesAndCode();
+})();
+</script>
