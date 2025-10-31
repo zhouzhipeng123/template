@@ -1,0 +1,148 @@
+<!-- =========================
+     Apple 风格 · Front（去水印）
+     ========================= -->
+<div class="bar xleft">
+  <span class="icon ximg breath" aria-hidden="true"></span>
+  <span class="bar-title">
+    {{#Tags}}{{Tags}}{{/Tags}}{{^Tags}}问题{{/Tags}}
+  </span>
+  <span id="time" aria-label="当前复习时间"></span>
+</div>
+
+{{#Tags}}
+  <div class="section" style="padding-top:0.4rem">
+    <span class="badge">{{Tags}}</span>
+  </div>
+{{/Tags}}
+
+<div class="section h2">
+  {{问题}}
+</div>
+
+<!-- 轻量功能脚本：时间、图片放大、表格增强 -->
+<script>
+(function () {
+  // 全局命名空间，前后面共用
+  window.__appleEnhance = window.__appleEnhance || {};
+  var NS = window.__appleEnhance;
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  // 只写一次时间，防止后面覆盖你手动写的
+  function writeTimeOnce() {
+    var t = document.getElementById('time');
+    if (!t) return;
+    if (!t.textContent || !t.textContent.trim()) {
+      var d = new Date();
+      t.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+      t.title = d.toLocaleString();
+    }
+  }
+
+  // 清除所有放大态
+  function clearAllZoom() {
+    var zoomed = document.querySelectorAll('img.zoomed');
+    for (var j = 0; j < zoomed.length; j++) {
+      zoomed[j].classList.remove('zoomed');
+      zoomed[j].style.cursor = 'zoom-in';
+    }
+    document.body.classList.remove('zooming');
+  }
+
+  // 图片点击放大 + ESC 关闭 + 背景罩
+  function enableImageZoom(scope){
+    var root = scope || document;
+    var imgs = root.querySelectorAll('img');
+    for (var i = 0; i < imgs.length; i++) {
+      (function (img) {
+        // 防重复绑定
+        if (img.dataset.zoomBound) return;
+        img.dataset.zoomBound = "1";
+
+        // 默认样式
+        img.style.cursor = 'zoom-in';
+
+        img.addEventListener('click', function(ev){
+          // 1) 图标里的图片不放大
+          if (img.closest('.icon')) return;
+          // 2) 明确标了 data-nozoom / .no-zoom 的也不放大
+          if (img.dataset.nozoom === "1" || img.classList.contains('no-zoom')) return;
+
+          // 已经是放大状态 → 收回
+          if (img.classList.contains('zoomed')) {
+            img.classList.remove('zoomed');
+            img.style.cursor = 'zoom-in';
+            if (!document.querySelector('img.zoomed')) {
+              document.body.classList.remove('zooming');
+            }
+            return;
+          }
+
+          // 先清掉别的放大图，保证只放大一张
+          clearAllZoom();
+
+          // 再放大当前这张
+          img.classList.add('zoomed');
+          img.style.cursor = 'zoom-out';
+          document.body.classList.add('zooming');
+
+          // 阻止冒泡到下面那个“点空白处收回”
+          ev.stopPropagation();
+        });
+      })(imgs[i]);
+    }
+
+    // ESC 一次全关（全局只绑一次）
+    if (!NS.escBound) {
+      document.addEventListener('keydown', function(e){
+        e = e || window.event;
+        var key = e.key || e.keyCode;
+        if (key === 'Escape' || key === 27) {
+          clearAllZoom();
+        }
+      }, false);
+      NS.escBound = true;
+    }
+
+    // 点空白处也关（全局只绑一次）
+    if (!NS.clickBlankBound) {
+      document.addEventListener('click', function(e){
+        if (!document.body.classList.contains('zooming')) return;
+        if (e.target && e.target.tagName === 'IMG') return;
+        clearAllZoom();
+      }, false);
+      NS.clickBlankBound = true;
+    }
+  }
+
+  // 表格/代码自动加样式
+  function enhanceTablesAndCode(){
+    var tbs = document.querySelectorAll('table');
+    for (var i = 0; i < tbs.length; i++) {
+      var tb = tbs[i];
+      tb.classList.add('table');
+      var w = tb.parentElement;
+      if (w && w !== document.body && w !== document.documentElement) {
+        w.classList.add('scroll-x');
+      }
+    }
+    var codes = document.querySelectorAll('pre, code');
+    for (var j = 0; j < codes.length; j++) {
+      codes[j].classList.add('code');
+    }
+  }
+
+  // 暴露给背面用
+  NS.init = function () {
+    if (NS.__inited) return;
+    NS.__inited = true;
+
+    writeTimeOnce();
+    enableImageZoom();
+    enhanceTablesAndCode();
+  };
+
+  // 正面先跑一遍
+  NS.init();
+})();
+</script>
