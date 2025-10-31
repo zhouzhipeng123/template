@@ -132,14 +132,112 @@
     }
   }
 
+  var VIEWPORT_MARGIN = 24;
+  var MIN_VIEWPORT_HEIGHT = 180;
+
+  function getAvailableWidth(img) {
+    var current = img.parentElement;
+    while (current) {
+      if (current.clientWidth) {
+        return current.clientWidth;
+      }
+      current = current.parentElement;
+    }
+    var docWidth = document.documentElement ? document.documentElement.clientWidth : 0;
+    return docWidth || window.innerWidth || img.naturalWidth || 0;
+  }
+
+  function getMaxWidth(availableWidth) {
+    if (!window.innerWidth) return availableWidth;
+    var max = window.innerWidth - VIEWPORT_MARGIN;
+    if (max <= 0) return availableWidth;
+    return Math.min(availableWidth, max);
+  }
+
+  function getMaxHeight() {
+    if (!window.innerHeight) return 0;
+    var h = window.innerHeight - VIEWPORT_MARGIN;
+    if (h <= 0) return 0;
+    return Math.max(h, MIN_VIEWPORT_HEIGHT);
+  }
+
+  function applyFitToImage(img) {
+    if (!img || img.closest('.icon')) return;
+    if (!img.naturalWidth || !img.naturalHeight) return;
+
+    var availableWidth = getAvailableWidth(img);
+    if (!availableWidth) return;
+
+    var maxWidth = getMaxWidth(availableWidth) || availableWidth;
+    var maxHeight = getMaxHeight();
+    if (!maxHeight) {
+      maxHeight = availableWidth * (img.naturalHeight / img.naturalWidth);
+    }
+
+    var aspect = img.naturalHeight / img.naturalWidth;
+    var width = maxWidth;
+    var height = width * aspect;
+
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height / aspect;
+    }
+
+    img.style.width = width.toFixed(2) + 'px';
+    img.style.height = height.toFixed(2) + 'px';
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = maxHeight.toFixed(2) + 'px';
+    img.style.marginLeft = 'auto';
+    img.style.marginRight = 'auto';
+    img.dataset.fitMode = height >= maxHeight ? 'height' : 'width';
+  }
+
+  function bindFitOnLoad(img) {
+    if (img.closest('.icon')) return;
+    if (img.dataset.fitBound === '1') return;
+    img.dataset.fitBound = '1';
+    img.addEventListener('load', function(){
+      applyFitToImage(img);
+    });
+  }
+
+  function fitImages(scope) {
+    var root = scope || document;
+    var imgs = root.querySelectorAll('img');
+    for (var i = 0; i < imgs.length; i++) {
+      var img = imgs[i];
+      if (img.closest('.icon')) continue;
+      bindFitOnLoad(img);
+      if (img.complete && img.naturalWidth) {
+        applyFitToImage(img);
+      }
+    }
+  }
+
+  function bindResizeForImages() {
+    if (NS.resizeBound) return;
+    var timer = null;
+    window.addEventListener('resize', function(){
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function(){
+        fitImages();
+      }, 120);
+    });
+    NS.resizeBound = true;
+  }
+
   // 暴露给背面用
+  NS.fitImages = fitImages;
+
   NS.init = function () {
     if (NS.__inited) return;
     NS.__inited = true;
 
     writeTimeOnce();
-    enableImageZoom();
     enhanceTablesAndCode();
+    enableImageZoom();
+    fitImages();
+    bindResizeForImages();
   };
 
   // 正面先跑一遍
